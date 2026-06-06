@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Health Dashboard</title>
+<title>Health Dashboard · jbogart</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -12,9 +12,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:.5rem}
 .title{font-size:20px;font-weight:500}
 .subtitle{font-size:12px;color:#888;margin-top:2px}
-.sources{margin:.5rem 0 1rem}
-.sb{display:inline-flex;align-items:center;gap:4px;font-size:10px;background:#fff;border:0.5px solid #d0cfca;border-radius:99px;padding:2px 8px;color:#666;margin-right:4px}
-.sb.live{border-color:#0f6e56;color:#0f6e56}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;background:#fff;border:0.5px solid #0f6e56;border-radius:99px;padding:2px 10px;color:#0f6e56;margin-right:4px}
 .sl{font-size:10px;font-weight:500;letter-spacing:.08em;color:#aaa;text-transform:uppercase;margin:1.5rem 0 .75rem}
 .mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .mc{background:#ece9e0;border-radius:8px;padding:.9rem 1rem}
@@ -31,12 +29,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .rc{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1rem 1.25rem}
 .rr{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.08)}
 .rr:last-child{border-bottom:none;padding-bottom:0}
-.ri{font-size:16px;color:#185fa5;margin-top:1px;flex-shrink:0;width:20px}
-.rt{font-size:13px;line-height:1.5}
-.rsub{font-size:11px;color:#aaa;margin-top:2px}
-.tab-row{display:flex;gap:6px;margin-bottom:.75rem}
-.tab{font-size:12px;padding:4px 12px;border-radius:99px;border:0.5px solid rgba(0,0,0,0.15);background:transparent;color:#888;cursor:pointer}
-.tab.active{background:#e6f1fb;color:#185fa5;border-color:transparent}
+.ri{font-size:16px;color:#185fa5;margin-top:1px;flex-shrink:0;width:22px}
+.rt{font-size:13px;line-height:1.5;font-weight:500}
+.rsub{font-size:11px;color:#aaa;margin-top:2px;font-weight:400}
+.act-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);font-size:13px}
+.act-row:last-child{border-bottom:none}
+.act-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;opacity:0.85}
+.act-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act-meta{font-size:11px;color:#aaa;margin-top:2px}
+.act-stat{margin-left:auto;text-align:right;font-size:12px;color:#666;flex-shrink:0}
+.dim{color:#aaa}
+.zone-wrap{margin-bottom:8px}
+.zone-lbl{display:flex;justify-content:space-between;font-size:11px;color:#666;margin-bottom:3px}
+.zone-track{background:#ece9e0;border-radius:99px;height:8px;overflow:hidden}
+.zone-fill{height:100%;border-radius:99px}
+.pbox{padding:5px 7px;background:#f5f5f0;border-radius:6px;font-size:11px}
+.pwr-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}
 .stat-row{display:flex;gap:20px;margin-top:8px;font-size:12px;color:#888;flex-wrap:wrap}
 .stat-row strong{color:#1a1a18}
 .blood-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 1.5rem}
@@ -44,73 +52,300 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .brow:last-child{border-bottom:none}
 .bval-good{font-weight:500;color:#3b6d11}
 .bval-warn{font-weight:500;color:#854f0b}
-footer{margin-top:1.5rem;font-size:11px;color:#bbb;text-align:center}
+.leg{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:11px;color:#666}
+.leg span{display:flex;align-items:center;gap:4px}
+.leg-dot{width:10px;height:10px;border-radius:2px}
+.load-bar-track{background:#ece9e0;border-radius:99px;height:10px;overflow:hidden;margin:8px 0 4px}
+.load-bar-fill{height:100%;border-radius:99px;transition:width .3s}
+footer{margin-top:2rem;font-size:11px;color:#bbb;text-align:center;line-height:1.8}
 @media(max-width:600px){.two{grid-template-columns:1fr}.blood-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="dash">
+
   <div class="header">
     <div>
       <div class="title">Health Dashboard</div>
-      <div class="subtitle">Real data · Jun 4, 2026 · DOB Dec 28 1981 (age 44)</div>
+      <div class="subtitle">Last updated 6 Jun 2026 · 19:04 UTC</div>
     </div>
   </div>
-  <div class="sources">
-    <span class="sb live">&#9679; Strava (live)</span>
-    <span class="sb live">&#9679; Apple Health — 399k HR readings · 451 workouts · 3yr VO₂ max history</span>
+  <div style="margin:.5rem 0 1.25rem">
+    <span class="badge">● Strava (live)</span>
+    <span class="badge">● Apple Health</span>
   </div>
 
-  <div class="sl">Vitals — 30-day averages</div>
+  <div class="sl">Activity summary — last 90 days</div>
   <div class="mg">
+    <div class="mc"><div class="ml">Activities</div><div class="mv">13</div><div class="ms">last 90 days</div><span class="mt ti">All sports</span></div>
+    <div class="mc"><div class="ml">Calories burned</div><div class="mv">0 <span class="mu">kcal</span></div><div class="ms">active calories</div><span class="mt ti">Strava</span></div>
+    <div class="mc"><div class="ml">Top sport</div><div class="mv" style="font-size:16px">Pickleball</div><div class="ms">8 sessions</div><span class="mt tg">Most frequent</span></div>
+    <div class="mc"><div class="ml">Training load</div><div class="mv">904</div><div class="ms">total relative effort</div><span class="mt ti">Strava</span></div>
     <div class="mc"><div class="ml">Resting HR</div><div class="mv">57 <span class="mu">bpm</span></div><div class="ms">30-day avg · Apple Watch</div><span class="mt tg">Excellent</span></div>
-    <div class="mc"><div class="ml">HRV (SDNN)</div><div class="mv">46 <span class="mu">ms</span></div><div class="ms">30-day avg · overnight</div><span class="mt tw">Below goal</span></div>
-    <div class="mc"><div class="ml">Avg steps</div><div class="mv">10,725</div><div class="ms">7-day avg</div><span class="mt tg">Above 10k ✓</span></div>
-    <div class="mc"><div class="ml">VO₂ max</div><div class="mv">38.6 <span class="mu">ml/kg</span></div><div class="ms">Jun 3 · Apple Watch</div><span class="mt tw">Fair for age 44</span></div>
-    <div class="mc"><div class="ml">Move (today)</div><div class="mv">286 <span class="mu">kcal</span></div><div class="ms">Goal: 480 kcal</div><span class="mt tw">60% of goal</span></div>
-    <div class="mc"><div class="ml">Exercise (Jun 3)</div><div class="mv">100 <span class="mu">min</span></div><div class="ms">Pickleball · goal met</div><span class="mt tg">Goal met ✓</span></div>
+    <div class="mc"><div class="ml">VO₂ max</div><div class="mv">38.6 <span class="mu">ml/kg</span></div><div class="ms">Apple Watch · Jun 3</div><span class="mt tw">Fair — target 42+</span></div>
   </div>
 
-  <div class="sl">Resting Heart Rate — 90 days</div>
-  <div class="cc">
-    <div style="position:relative;width:100%;height:160px"><canvas id="rhrChart"></canvas></div>
-    <div class="stat-row"><span>30-day avg: <strong>57 bpm</strong></span><span>Min: <strong style="color:#3b6d11">47 bpm</strong></span><span>Max: <strong style="color:#854f0b">69 bpm</strong></span><span>Source: Apple Watch</span></div>
+  <!-- WEEKLY PLANNER -->
+  <div class="sl">This week's fitness plan — Jun 1 to Jun 7</div>
+  <div class="cc" style="padding:1rem 1.25rem 1rem">
+
+    <!-- Weekly load progress -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+      <div style="font-size:12px;color:#666">Weekly training load</div>
+      <div style="font-size:12px;color:#666"><strong style="color:#1a1a18">74</strong> / ~79 RE avg &nbsp;·&nbsp; 4 activities &nbsp;·&nbsp; 0 kcal</div>
+    </div>
+    <div class="load-bar-track">
+      <div class="load-bar-fill" style="width:94%;background:#1D9E75"></div>
+    </div>
+    <div style="font-size:10px;color:#aaa;margin-bottom:1rem">94% of your typical weekly load</div>
+
+    
+        <div style="background:#fafafa;border:0.5px solid #ddd;border-radius:10px;padding:.85rem 1rem;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start">
+          <div style="min-width:44px;text-align:center">
+            <div style="font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase">Mon</div>
+            <div style="font-size:12px;color:#666">1 Jun</div>
+            <div style="font-size:22px;margin-top:4px">—</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:3px">Rest / unlogged</div>
+            <div style="font-size:12px;color:#888;line-height:1.5">No activity logged.</div>
+            <div style="margin-top:6px"></div>
+          </div>
+        </div>
+        <div style="background:#fafafa;border:0.5px solid #ddd;border-radius:10px;padding:.85rem 1rem;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start">
+          <div style="min-width:44px;text-align:center">
+            <div style="font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase">Tue</div>
+            <div style="font-size:12px;color:#666">2 Jun</div>
+            <div style="font-size:22px;margin-top:4px">—</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:3px">Rest / unlogged</div>
+            <div style="font-size:12px;color:#888;line-height:1.5">No activity logged.</div>
+            <div style="margin-top:6px"></div>
+          </div>
+        </div>
+        <div style="background:#f0faf0;border:0.5px solid #1D9E75;border-radius:10px;padding:.85rem 1rem;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start">
+          <div style="min-width:44px;text-align:center">
+            <div style="font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase">Wed</div>
+            <div style="font-size:12px;color:#666">3 Jun</div>
+            <div style="font-size:22px;margin-top:4px">🏓</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:3px">Evening Pickleball</div>
+            <div style="font-size:12px;color:#888;line-height:1.5">0 kcal · RE 37</div>
+            <div style="margin-top:6px"><span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#eaf3de;color:#3b6d11;font-weight:500">✓ Done</span></div>
+          </div>
+        </div>
+        <div style="background:#f0faf0;border:0.5px solid #1D9E75;border-radius:10px;padding:.85rem 1rem;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start">
+          <div style="min-width:44px;text-align:center">
+            <div style="font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase">Thu</div>
+            <div style="font-size:12px;color:#666">4 Jun</div>
+            <div style="font-size:22px;margin-top:4px">🚶</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:3px">Evening Walk</div>
+            <div style="font-size:12px;color:#888;line-height:1.5">0 kcal · RE 6</div>
+            <div style="margin-top:6px"><span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#eaf3de;color:#3b6d11;font-weight:500">✓ Done</span></div>
+          </div>
+        </div>
+        <div style="background:#f0faf0;border:0.5px solid #1D9E75;border-radius:10px;padding:.85rem 1rem;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start">
+          <div style="min-width:44px;text-align:center">
+            <div style="font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase">Fri</div>
+            <div style="font-size:12px;color:#666">5 Jun</div>
+            <div style="font-size:22px;margin-top:4px">🏓</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:3px">Evening Pickleball, Night Pickleball</div>
+            <div style="font-size:12px;color:#888;line-height:1.5">0 kcal · RE 31</div>
+            <div style="margin-top:6px"><span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#eaf3de;color:#3b6d11;font-weight:500">✓ Done</span></div>
+          </div>
+        </div>
+        <div style="background:#fff;border:0.5px solid #e0e0d8;border-radius:10px;padding:.85rem 1rem;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start">
+          <div style="min-width:44px;text-align:center">
+            <div style="font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase">Sat</div>
+            <div style="font-size:12px;color:#666">6 Jun</div>
+            <div style="font-size:22px;margin-top:4px">🚲</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:3px">Gravel ride — 25–35 km</div>
+            <div style="font-size:12px;color:#888;line-height:1.5">Your strongest activity (20+ PRs on recent rides). Push Z3–Z4 on climbs, Z2 on flats. Target 500+ kcal. Great VO₂ stimulus.</div>
+            <div style="margin-top:6px"><span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#e6f1fb;color:#185fa5;font-weight:500">Endurance</span></div>
+          </div>
+        </div>
+        <div style="background:#fff;border:0.5px solid #e0e0d8;border-radius:10px;padding:.85rem 1rem;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start">
+          <div style="min-width:44px;text-align:center">
+            <div style="font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase">Sun</div>
+            <div style="font-size:12px;color:#666">7 Jun</div>
+            <div style="font-size:22px;margin-top:4px">🧘</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:3px">Rest + mobility — 15 min stretching</div>
+            <div style="font-size:12px;color:#888;line-height:1.5">Full rest day. Hip flexors, hamstrings, thoracic spine. Helps HRV recovery — consistent rest days push your baseline higher.</div>
+            <div style="margin-top:6px"><span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#e6f1fb;color:#185fa5;font-weight:500">Recovery</span></div>
+          </div>
+        </div>
   </div>
 
-  <div class="sl">Heart Rate Variability — 90 days</div>
+  <!-- RECENT ACTIVITIES -->
+  <div class="sl">Recent activities — last 10</div>
+  <div class="cc" style="padding:.75rem 1.25rem">
+    
+        <div class="act-row">
+          <div class="act-dot" style="background:#7F77DD">🏓</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Night Pickleball</div>
+            <div class="act-meta">Jun 6 · Pickleball · 16m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 3</span></div>
+        </div>
+        <div class="act-row">
+          <div class="act-dot" style="background:#7F77DD">🏓</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Evening Pickleball</div>
+            <div class="act-meta">Jun 6 · Pickleball · 2h 13m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 28</span></div>
+        </div>
+        <div class="act-row">
+          <div class="act-dot" style="background:#EF9F27">🚶</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Evening Walk</div>
+            <div class="act-meta">Jun 5 · Walk · 48m · 3.4 km · 14m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 6</span></div>
+        </div>
+        <div class="act-row">
+          <div class="act-dot" style="background:#7F77DD">🏓</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Evening Pickleball</div>
+            <div class="act-meta">Jun 4 · Pickleball · 1h 29m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 37</span></div>
+        </div>
+        <div class="act-row">
+          <div class="act-dot" style="background:#378ADD">🚲</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Afternoon Gravel Ride</div>
+            <div class="act-meta">May 29 · Gravel Ride · 1h 01m · 21.9 km · 21.3 km/h · 260m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 161</span></div>
+        </div>
+        <div class="act-row">
+          <div class="act-dot" style="background:#378ADD">🚲</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Afternoon Ride</div>
+            <div class="act-meta">May 22 · Ride · 1h 00m · 23.6 km · 23.4 km/h · 136m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 199</span></div>
+        </div>
+        <div class="act-row">
+          <div class="act-dot" style="background:#1D9E75">🥾</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Lunch Hike</div>
+            <div class="act-meta">May 7 · Hike · 31m · 1.3 km · 50m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 15</span></div>
+        </div>
+        <div class="act-row">
+          <div class="act-dot" style="background:#7F77DD">🏓</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Evening Pickleball</div>
+            <div class="act-meta">Apr 28 · Pickleball · 1h 56m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 32</span></div>
+        </div>
+        <div class="act-row">
+          <div class="act-dot" style="background:#7F77DD">🏓</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Evening Pickleball</div>
+            <div class="act-meta">Apr 16 · Pickleball · 2h 08m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 59</span></div>
+        </div>
+        <div class="act-row">
+          <div class="act-dot" style="background:#7F77DD">🏓</div>
+          <div style="flex:1;min-width:0">
+            <div class="act-name">Evening Pickleball</div>
+            <div class="act-meta">Apr 14 · Pickleball · 2h 23m</div>
+          </div>
+          <div class="act-stat">0 kcal<br><span class="dim">RE 93</span></div>
+        </div>
+  </div>
+
+  <div class="sl">Monthly calorie volume — last 12 months</div>
   <div class="cc">
-    <div style="position:relative;width:100%;height:150px"><canvas id="hrvChart"></canvas></div>
-    <div class="stat-row"><span>30-day avg: <strong>46 ms</strong></span><span>Peak: <strong style="color:#3b6d11">71 ms</strong> (May 27)</span><span>Low: <strong style="color:#854f0b">31 ms</strong></span><span>Overnight SDNN · Apple Watch</span></div>
+    <div style="position:relative;width:100%;height:200px"><canvas id="volChart"></canvas></div>
+    <div class="leg">
+      <span><span class="leg-dot" style="background:#378ADD"></span>Cycling / Gravel</span>
+      <span><span class="leg-dot" style="background:#E24B4A"></span>Pickleball</span>
+      <span><span class="leg-dot" style="background:#1D9E75"></span>Run / Hike</span>
+    </div>
   </div>
 
   <div class="two">
     <div>
-      <div class="sl">Daily Steps — 90 days</div>
-      <div class="cc" style="margin-bottom:0"><div style="position:relative;width:100%;height:130px"><canvas id="stepsChart"></canvas></div></div>
+      <div class="sl">Heart rate zones</div>
+      <div class="cc" style="margin-bottom:0">
+        
+        <div class="zone-wrap">
+          <div class="zone-lbl"><span>Z1 Recovery</span><span>0–120 bpm</span></div>
+          <div class="zone-track"><div class="zone-fill" style="width:15%;background:#1D9E75"></div></div>
+        </div>
+        <div class="zone-wrap">
+          <div class="zone-lbl"><span>Z2 Aerobic</span><span>121–150 bpm</span></div>
+          <div class="zone-track"><div class="zone-fill" style="width:45%;background:#378ADD"></div></div>
+        </div>
+        <div class="zone-wrap">
+          <div class="zone-lbl"><span>Z3 Tempo</span><span>151–165 bpm</span></div>
+          <div class="zone-track"><div class="zone-fill" style="width:25%;background:#EF9F27"></div></div>
+        </div>
+        <div class="zone-wrap">
+          <div class="zone-lbl"><span>Z4 Threshold</span><span>166–179 bpm</span></div>
+          <div class="zone-track"><div class="zone-fill" style="width:12%;background:#D85A30"></div></div>
+        </div>
+        <div class="zone-wrap">
+          <div class="zone-lbl"><span>Z5 Max</span><span>180+ bpm</span></div>
+          <div class="zone-track"><div class="zone-fill" style="width:3%;background:#E24B4A"></div></div>
+        </div>
+        <div style="font-size:11px;color:#aaa;margin-top:8px">Max HR source · Connect HR monitor for time-in-zone</div>
+      </div>
     </div>
     <div>
-      <div class="sl">Move Calories — last 14 days</div>
-      <div class="cc" style="margin-bottom:0"><div style="position:relative;width:100%;height:130px"><canvas id="ringsChart"></canvas></div></div>
+      <div class="sl">Cycling power — FTP</div>
+      <div class="cc" style="margin-bottom:0;text-align:center">
+        <div style="font-size:42px;font-weight:500;padding:.5rem 0">175 <span style="font-size:18px;font-weight:400;color:#888">W</span></div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:6px">Estimated FTP · 7 power zones</div>
+        <div class="pwr-grid"><div class="pbox"><span class="dim">Z1 Active rec</span><br><strong>0–96 W</strong></div><div class="pbox"><span class="dim">Z2 Endurance</span><br><strong>97–131 W</strong></div><div class="pbox"><span class="dim">Z3 Tempo</span><br><strong>132–158 W</strong></div><div class="pbox"><span class="dim">Z4 Threshold</span><br><strong>159–184 W</strong></div><div class="pbox"><span class="dim">Z5 VO₂ max</span><br><strong>185–210 W</strong></div><div class="pbox"><span class="dim">Z6 Anaerobic</span><br><strong>211–263 W</strong></div><div class="pbox"><span class="dim">Z7 Neuro</span><br><strong>264+ W</strong></div></div>
+      </div>
     </div>
   </div>
 
-  <div class="sl">VO₂ Max — 3 year history (Apple Watch GPS)</div>
+  <div class="sl">VO₂ max — 3 year trend (Apple Watch)</div>
   <div class="cc">
-    <div class="tab-row">
-      <button class="tab active" id="tAll" onclick="showVo2('all')">All time</button>
-      <button class="tab" id="t1yr" onclick="showVo2('1yr')">1 year</button>
-    </div>
     <div style="position:relative;width:100%;height:200px"><canvas id="vo2Chart"></canvas></div>
-    <div class="stat-row"><span>Current: <strong>38.6</strong></span><span>Peak: <strong style="color:#3b6d11">43.2</strong> (Dec 2024)</span><span>Good for age 44M: <strong>42.5+</strong></span><span style="color:#854f0b">4.6 pts below your peak</span></div>
+    <div class="stat-row">
+      <span>Current: <strong>38.6</strong></span>
+      <span>Peak: <strong style="color:#3b6d11">43.2</strong> (Dec 2024)</span>
+      <span>Good for age 44M: <strong>42.5+</strong></span>
+      <span style="color:#854f0b">↓ 4.6 from peak</span>
+    </div>
   </div>
 
-  <div class="sl">VO₂ Max — Age context (44M)</div>
-  <div class="cc">
-    <canvas id="vo2Gauge" height="60" style="width:100%"></canvas>
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-top:4px"><span>Poor &lt;33</span><span>Fair 33–42</span><span>Good 42–52</span><span>Excellent 52+</span></div>
+  <div class="sl">Apple Health — Resting HR &amp; HRV</div>
+  <div class="two">
+    <div class="cc" style="margin-bottom:0">
+      <div style="font-size:12px;color:#666;margin-bottom:4px">Resting Heart Rate · 30-day avg</div>
+      <div style="font-size:36px;font-weight:500">57 <span style="font-size:16px;color:#888;font-weight:400">bpm</span></div>
+      <div style="font-size:11px;color:#aaa;margin-top:4px">Range: 47–69 bpm · Excellent for age 44</div>
+    </div>
+    <div class="cc" style="margin-bottom:0">
+      <div style="font-size:12px;color:#666;margin-bottom:4px">HRV (SDNN) · 30-day avg</div>
+      <div style="font-size:36px;font-weight:500">46 <span style="font-size:16px;color:#888;font-weight:400">ms</span></div>
+      <div style="font-size:11px;color:#aaa;margin-top:4px">Peak: 71 ms (May 27) · Target: 55–65 ms baseline</div>
+    </div>
   </div>
 
-  <div class="sl">Blood Diagnostics — Annual (Jan 2026)</div>
+  <div class="sl">Blood diagnostics — annual (Jan 2026)</div>
   <div class="cc">
     <div class="blood-grid">
       <div>
@@ -129,69 +364,49 @@ footer{margin-top:1.5rem;font-size:11px;color:#bbb;text-align:center}
     <div style="margin-top:10px;font-size:11px;color:#aaa">Next annual draw: Jan 2027 · <span style="color:#854f0b">3 markers to watch: Triglycerides, Ferritin, Vitamin D</span></div>
   </div>
 
-  <div class="sl">Recommendations — from your real data</div>
+  <div class="sl">Recommendations</div>
   <div class="rc">
-    <div class="rr"><div class="ri">↑</div><div><div class="rt"><strong>VO₂ max dropped 4.6 pts from your Dec 2024 peak — prioritise aerobic work</strong></div><div class="rsub">Peak was 43.2 (Dec 2024). Regular Zone 2 cycling and running will reverse this. Target: back above 42 by end of summer.</div></div></div>
-    <div class="rr"><div class="ri">〜</div><div><div class="rt"><strong>HRV of 46 ms has room to grow — focus on sleep consistency</strong></div><div class="rsub">Your HRV spiked to 71 ms on May 27 (well-rested night) but averages 46. Consistent sleep + reduced stress should push your baseline to 55–65 ms.</div></div></div>
-    <div class="rr"><div class="ri">♥</div><div><div class="rt"><strong>Resting HR of 57 bpm is excellent for age 44 — a real strength</strong></div><div class="rsub">Normal for your age is 60–70 bpm. Your 57 bpm reflects years of cycling fitness. Keep up at least 2 aerobic sessions per week to protect it.</div></div></div>
-    <div class="rr"><div class="ri">☀</div><div><div class="rt"><strong>Vitamin D (28) and ferritin (18) are both low-normal — worth addressing</strong></div><div class="rsub">Low Vitamin D blunts exercise recovery. Low ferritin causes fatigue on hard efforts. Discuss supplementation with your doctor before next labs.</div></div></div>
-    <div class="rr"><div class="ri">+</div><div><div class="rt"><strong>451 workouts logged — but no strength training. Add 2× per week.</strong></div><div class="rsub">214 rides, 102 runs, 50 elliptical, 45 pickleball sessions. Strength is the missing pillar for long-term health at 44.</div></div></div>
+    <div class="rr"><div class="ri">↑</div><div><div class="rt">VO₂ max 4.6 pts below your Dec 2024 peak — 2× Zone 2 rides per week will reverse this</div><div class="rsub">Target: back above 42 by end of summer. Your gravel rides are your best VO₂ stimulus.</div></div></div>
+    <div class="rr"><div class="ri">🏋️</div><div><div class="rt">Strength training missing — add 2× per week</div><div class="rsub">Cycling + pickleball cover cardio well. Strength is the missing pillar for longevity at 44. Even 30 min bodyweight sessions count.</div></div></div>
+    <div class="rr"><div class="ri">〜</div><div><div class="rt">HRV of 46 ms — consistent sleep timing is the highest-leverage fix</div><div class="rsub">Your ceiling is 71 ms. Regular bedtime + limiting alcohol pushes baseline to 55–65 ms range.</div></div></div>
+    <div class="rr"><div class="ri">♥</div><div><div class="rt">Resting HR 57 bpm — excellent for 44, top ~15% for your age</div><div class="rsub">Protect it by keeping 2 aerobic sessions per week minimum. Don't let the base erode further.</div></div></div>
+    <div class="rr"><div class="ri">☀</div><div><div class="rt">Vitamin D (28) and ferritin (18) are low-normal — discuss supplementation with your doctor</div><div class="rsub">Both affect energy and recovery on hard efforts. Worth addressing before next annual blood draw.</div></div></div>
   </div>
 
-  <footer>Data sourced from Apple Health (export.zip) and Strava MCP · Not medical advice · Always consult your doctor</footer>
+  <footer>
+    jbogart · Health Dashboard · Murrieta CA<br>
+    Strava refreshes every 6 hours via GitHub Actions · Apple Health data from last manual export<br>
+    Not medical advice · Always consult your doctor
+  </footer>
 </div>
 
 <script>
-const grid='rgba(0,0,0,0.06)', tick='rgba(0,0,0,0.4)';
+const grid='rgba(0,0,0,0.06)',tick='rgba(0,0,0,0.4)';
 
-const shortLabels=["03/07","03/08","03/09","03/10","03/11","03/12","03/13","03/14","03/15","03/16","03/17","03/18","03/19","03/20","03/21","03/22","03/23","03/24","03/25","03/26","03/27","03/28","03/29","03/30","03/31","04/01","04/02","04/03","04/04","04/05","04/06","04/07","04/08","04/09","04/10","04/11","04/12","04/13","04/14","04/15","04/16","04/17","04/18","04/19","04/20","04/21","04/22","04/23","04/24","04/25","04/26","04/27","04/28","04/29","04/30","05/01","05/02","05/03","05/04","05/05","05/06","05/07","05/08","05/09","05/10","05/11","05/12","05/13","05/14","05/15","05/16","05/17","05/18","05/19","05/20","05/21","05/22","05/23","05/24","05/25","05/26","05/27","05/28","05/29","05/30","05/31","06/01","06/02","06/03","06/04"];
-const rhrVals=[59,59,58,60,58,60,62,60,55,55,63,60,59,54,60,58,58,56,57,61,58,60,53,60,59,54,56,59,58,63,58,58,56,59,56,57,55,64,56,60,59,60,69,59,57,60,58,60,62,53,52,59,56,53,57,54,67,58,54,60,62,57,55,54,47,63,52,55,56,58,52,null,59,59,57,54,64,61,55,58,59,57,58,58,58,59,56,60,63,57];
-const hrvVals=[36.3,50.1,48.3,39.3,41.9,47.4,41.8,39.7,51.7,47.1,39.2,46,44.3,45.5,45,42.5,47.6,49.9,37.9,39.9,36.4,50.4,36,43.7,42,58.1,52.2,44.2,41.3,33.1,37.5,48.3,49.6,45.6,47.6,45.7,35.7,36.3,51.4,40.5,34.4,46.1,38.5,36.2,45.4,57.6,31.9,46.5,40.2,51.4,44.4,58.7,43.9,52.5,46,49.3,61.6,42.8,40.3,39.6,39.2,51.1,42.4,42.5,43.4,53.7,65.4,52.6,45.3,50.9,40.9,43,42.6,41.4,51.3,42.6,38.8,38.6,37.3,50.1,45,41.7,62.7,38.1,31,48.8,71.1,47.2,42.9,48.6];
-const stepVals=[11565,13372,10683,9218,12996,9594,13778,10480,18300,8847,8692,17532,6759,11749,23335,17427,8192,7664,11220,12211,11097,14839,17681,20932,21567,7695,5896,3733,4326,8610,12571,8351,8569,6487,5684,8567,6148,13368,5262,15982,8235,9213,13544,7228,13843,11225,6080,12142,14328,13230,8336,12392,10559,5898,9491,14520,9350,28466,41963,27984,28886,35987,38013,37664,32817,43671,35986,19442,22128,23315,15272,7708,12350,9201,10763,5966,7222,20506,10242,15035,21690,7647,7157,15304,11683,11422,6741,7213,14064,8651];
-const ringDates=["05/22","05/23","05/24","05/25","05/26","05/27","05/28","05/29","05/30","05/31","06/01","06/02","06/03","06/04"];
-const ringMove=[889,555,459,503,606,368,312,916,367,412,340,279,879,286];
-const ringGoal=[540,540,540,540,540,540,540,540,540,540,480,480,480,480];
+new Chart(document.getElementById('volChart'),{
+  type:'bar',
+  data:{
+    labels:["07/25", "08/25", "09/25", "10/25", "11/25", "12/25", "01/26", "02/26", "03/26", "04/26", "05/26", "06/26"],
+    datasets:[
+      {label:'Cycling',data:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],backgroundColor:'rgba(55,138,221,0.75)',stack:'s',borderRadius:3},
+      {label:'Pickleball',data:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],backgroundColor:'rgba(226,75,74,0.75)',stack:'s',borderRadius:3},
+      {label:'Run/Hike',data:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],backgroundColor:'rgba(29,158,117,0.75)',stack:'s',borderRadius:3}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{y:{stacked:true,ticks:{color:tick,font:{size:10},callback:v=>v?v+' kcal':''},grid:{color:grid}},
+             x:{stacked:true,ticks:{color:tick,font:{size:10}},grid:{color:'transparent'}}}}
+});
 
-const vo2All={labels:["Jun'23","Jul'23","Aug'23","Sep'23","Oct'23","Nov'23","Dec'23","Jan'24","Feb'24","Mar'24","Apr'24","May'24","Jun'24","Jul'24","Aug'24","Sep'24","Oct'24","Nov'24","Dec'24","Feb'25","Mar'25","May'25","Jun'25","Jul'25","Oct'25","Jan'26","Feb'26","Mar'26","May'26","Jun'26"],vals:[41.8,41.8,39.3,41.0,42.0,41.9,41.1,38.7,39.2,40.6,37.0,39.5,39.9,40.0,37.5,36.3,38.1,40.2,43.2,42.4,39.5,38.2,38.0,39.8,40.9,37.1,37.6,38.1,38.5,38.6]};
-const vo21yr={labels:["Jun'25","Jul'25","Oct'25","Jan'26","Feb'26","Mar'26","May'26","Jun'26"],vals:[38.0,39.8,40.9,37.1,37.6,38.1,38.5,38.6]};
-
-new Chart(document.getElementById('rhrChart'),{type:'line',data:{labels:shortLabels,datasets:[{label:'Resting HR',data:rhrVals,borderColor:'#E24B4A',backgroundColor:'rgba(226,75,74,0.08)',borderWidth:1.5,pointRadius:0,fill:true,tension:0.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:44,max:72,ticks:{color:tick,font:{size:10},callback:v=>v+' bpm'},grid:{color:grid}},x:{ticks:{color:tick,font:{size:9},maxTicksLimit:8},grid:{color:'transparent'}}}}});
-
-new Chart(document.getElementById('hrvChart'),{type:'line',data:{labels:shortLabels,datasets:[{label:'HRV',data:hrvVals,borderColor:'#7F77DD',backgroundColor:'rgba(127,119,221,0.08)',borderWidth:1.5,pointRadius:0,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:25,max:78,ticks:{color:tick,font:{size:10},callback:v=>v+' ms'},grid:{color:grid}},x:{ticks:{color:tick,font:{size:9},maxTicksLimit:8},grid:{color:'transparent'}}}}});
-
-new Chart(document.getElementById('stepsChart'),{type:'bar',data:{labels:shortLabels,datasets:[{label:'Steps',data:stepVals,backgroundColor:stepVals.map(v=>v>=10000?'rgba(29,158,117,0.7)':'rgba(55,138,221,0.5)'),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:tick,font:{size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:grid}},x:{ticks:{color:tick,font:{size:9},maxTicksLimit:7},grid:{color:'transparent'}}}}});
-
-new Chart(document.getElementById('ringsChart'),{type:'bar',data:{labels:ringDates,datasets:[{label:'Move kcal',data:ringMove,backgroundColor:ringMove.map((v,i)=>v>=ringGoal[i]?'rgba(29,158,117,0.7)':'rgba(239,159,39,0.7)'),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:tick,font:{size:10}},grid:{color:grid}},x:{ticks:{color:tick,font:{size:9}},grid:{color:'transparent'}}}}});
-
-let vo2Inst=new Chart(document.getElementById('vo2Chart'),{type:'line',data:{labels:vo2All.labels,datasets:[{label:'VO₂ max',data:vo2All.vals,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#1D9E75',fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} ml/kg/min`}}},scales:{y:{min:34,max:46,ticks:{color:tick,font:{size:10}},grid:{color:grid}},x:{ticks:{color:tick,font:{size:10},maxRotation:45,autoSkip:true,maxTicksLimit:12},grid:{color:'transparent'}}}}});
-
-function showVo2(r){
-  ['tAll','t1yr'].forEach(id=>document.getElementById(id).classList.remove('active'));
-  document.getElementById(r==='all'?'tAll':'t1yr').classList.add('active');
-  const d=r==='all'?vo2All:vo21yr;
-  vo2Inst.data.labels=d.labels; vo2Inst.data.datasets[0].data=d.vals; vo2Inst.update();
-}
-
-window.addEventListener('load',()=>{
-  const canvas=document.getElementById('vo2Gauge');
-  const W=canvas.parentElement.clientWidth; canvas.width=W; canvas.height=60;
-  const ctx=canvas.getContext('2d');
-  const minV=20,maxV=65,totR=maxV-minV,by=20,bh=20;
-  const grad=ctx.createLinearGradient(0,0,W,0);
-  grad.addColorStop(0,'#E24B4A'); grad.addColorStop(0.38,'#EF9F27'); grad.addColorStop(0.62,'#1D9E75'); grad.addColorStop(1,'#0F6E56');
-  ctx.fillStyle=grad; ctx.globalAlpha=0.3;
-  ctx.beginPath(); ctx.roundRect(0,by,W,bh,4); ctx.fill(); ctx.globalAlpha=1;
-  const mx=((38.6-minV)/totR)*W;
-  ctx.fillStyle='#EF9F27'; ctx.beginPath(); ctx.moveTo(mx,by-2); ctx.lineTo(mx-6,by-10); ctx.lineTo(mx+6,by-10); ctx.closePath(); ctx.fill();
-  ctx.fillStyle='rgba(0,0,0,0.75)'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
-  ctx.fillText('38.6',mx,by-12);
-  ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.font='10px sans-serif';
-  ctx.fillText('you',mx,by+bh+12);
-  ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1;
-  [[33,'Poor/Fair'],[42.5,'Fair/Good'],[52,'Good/Exc']].forEach(([v,])=>{
-    const x=((v-minV)/totR)*W;
-    ctx.beginPath(); ctx.moveTo(x,by); ctx.lineTo(x,by+bh); ctx.stroke();
-  });
+const vo2Labels=["Jun'23","Jul'23","Aug'23","Sep'23","Oct'23","Nov'23","Dec'23","Jan'24","Feb'24","Mar'24","Apr'24","May'24","Jun'24","Jul'24","Aug'24","Sep'24","Oct'24","Nov'24","Dec'24","Feb'25","Mar'25","May'25","Jun'25","Jul'25","Oct'25","Jan'26","Feb'26","Mar'26","May'26","Jun'26"];
+const vo2Vals=[41.8,41.8,39.3,41.0,42.0,41.9,41.1,38.7,39.2,40.6,37.0,39.5,39.9,40.0,37.5,36.3,38.1,40.2,43.2,42.4,39.5,38.2,38.0,39.8,40.9,37.1,37.6,38.1,38.5,38.6];
+new Chart(document.getElementById('vo2Chart'),{
+  type:'line',
+  data:{labels:vo2Labels,datasets:[{label:'VO₂ max',data:vo2Vals,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#1D9E75',fill:true,tension:0.3}]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} ml/kg/min`}}},
+    scales:{y:{min:34,max:46,ticks:{color:tick,font:{size:10}},grid:{color:grid}},
+             x:{ticks:{color:tick,font:{size:10},maxRotation:45,maxTicksLimit:12},grid:{color:'transparent'}}}}
 });
 </script>
 </body>
