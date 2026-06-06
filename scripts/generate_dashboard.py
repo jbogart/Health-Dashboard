@@ -131,21 +131,20 @@ def build_week_plan(activities):
     week_end   = week_start + timedelta(days=6)           # Sunday
 
     # Activities done this week already
-    this_week = [
-        a for a in activities
-        if a.get("start_date_local", a.get("start_date",""))[:10] >= week_start.isoformat()
-    ]
+    def act_date(a):
+        return a.get("start_local", a.get("start_date_local", a.get("start_date","")))[:10]
+
+    this_week = [a for a in activities if act_date(a) >= week_start.isoformat()]
 
     done_sports = [a.get("sport_type", a.get("type","")) for a in this_week]
-    done_re     = sum(int(a.get("suffer_score") or 0) for a in this_week)
-    done_cal    = sum(int(a.get("calories") or 0) for a in this_week)
-    done_days   = set(a.get("start_date_local", a.get("start_date",""))[:10] for a in this_week)
+    done_re     = sum(int(_s(a, "relative_effort", "suffer_score")) for a in this_week)
+    done_cal    = sum(int(_s(a, "total_calories", "calories")) for a in this_week)
+    done_days   = set(act_date(a) for a in this_week)
 
     # 8-week avg weekly RE for baseline
     eight_weeks_ago = today - timedelta(weeks=8)
-    recent_acts = [a for a in activities
-                   if a.get("start_date_local", a.get("start_date",""))[:10] >= eight_weeks_ago.isoformat()]
-    avg_weekly_re = sum(int(a.get("suffer_score") or 0) for a in recent_acts) / 8
+    recent_acts = [a for a in activities if act_date(a) >= eight_weeks_ago.isoformat()]
+    avg_weekly_re = sum(int(_s(a, "relative_effort", "suffer_score")) for a in recent_acts) / 8
 
     # Days of the week remaining (not including today if already have activities)
     all_days = [week_start + timedelta(days=i) for i in range(7)]
@@ -285,33 +284,52 @@ def monthly_calories(activities):
     return by_month
 
 
+def _s(a, *keys):
+    """Get a value from activity, checking summary sub-object first."""
+    sub = a.get("summary", {})
+    for k in keys:
+        v = sub.get(k)
+        if v is not None and v != 0:
+            return v
+    for k in keys:
+        v = a.get(k)
+        if v is not None and v != 0:
+            return v
+    return 0
+
+
 def recent_rows(activities, n=10):
     rows = []
-    for a in sorted(activities, key=lambda x: x.get("start_date",""), reverse=True)[:n]:
+    key = lambda x: x.get("start_local", x.get("start_date", x.get("start_date_local","")))
+    for a in sorted(activities, key=key, reverse=True)[:n]:
         sport = a.get("sport_type", a.get("type", "?"))
-        dist  = a.get("distance", 0)
-        speed = a.get("average_speed") or a.get("avg_speed") or 0
-        elev  = a.get("total_elevation_gain") or a.get("elevation_gain") or 0
+        dist  = _s(a, "distance")
+        speed = _s(a, "avg_speed", "average_speed")
+        elev  = _s(a, "elevation_gain", "total_elevation_gain")
+        cal   = _s(a, "total_calories", "calories")
+        re    = _s(a, "relative_effort", "suffer_score")
+        prs   = _s(a, "pr_count", "achievement_count")
+        mt    = _s(a, "moving_time")
         rows.append({
             "icon":  sport_icon(sport),
             "color": activity_color(sport),
             "name":  a.get("name", "Activity"),
             "sport": sport_label(sport),
-            "date":  fmt_date(a.get("start_date", a.get("start_date_local",""))),
-            "time":  fmt_min(a.get("moving_time")),
+            "date":  fmt_date(key(a)),
+            "time":  fmt_min(mt),
             "dist":  f"{dist/1000:.1f} km" if dist > 0 else "—",
             "pace":  fmt_pace(speed, sport),
             "elev":  f"{int(elev)}m" if elev > 0 else "—",
-            "cal":   int(a.get("calories") or 0),
-            "re":    int(a.get("suffer_score") or 0),
-            "prs":   int(a.get("pr_count") or 0),
+            "cal":   int(cal),
+            "re":    int(re),
+            "prs":   int(prs),
         })
     return rows
 
 
 def summary_stats(activities):
-    total_cal = sum(int(a.get("calories") or 0) for a in activities)
-    total_re  = sum(int(a.get("suffer_score") or 0) for a in activities)
+    total_cal = sum(int(_s(a, "total_calories", "calories")) for a in activities)
+    total_re  = sum(int(_s(a, "relative_effort", "suffer_score")) for a in activities)
     sports    = defaultdict(int)
     for a in activities:
         sports[a.get("sport_type", a.get("type", "Other"))] += 1
