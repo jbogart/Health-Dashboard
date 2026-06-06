@@ -61,6 +61,25 @@ def get_activities(token, months=3):
     return activities
 
 
+def enrich_activities(token, activities, max_enrich=15):
+    """Fetch full detail for recent activities to get calories and other missing fields."""
+    enriched = []
+    for i, a in enumerate(activities):
+        if i < max_enrich:
+            try:
+                r = requests.get(f"https://www.strava.com/api/v3/activities/{a['id']}",
+                                 headers={"Authorization": f"Bearer {token}"})
+                if r.status_code == 200:
+                    enriched.append(r.json())
+                else:
+                    enriched.append(a)
+            except Exception:
+                enriched.append(a)
+        else:
+            enriched.append(a)
+    return enriched
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def fmt_date(iso):
@@ -677,12 +696,9 @@ if __name__ == "__main__":
     print("🏃 Fetching recent activities (last 90 days)...")
     activities = get_activities(token, months=3)
     print(f"   Found {len(activities)} activities")
-    if activities:
-        a = activities[0]
-        print(f"   Sample activity keys: {list(a.keys())}")
-        print(f"   Sample calories: {a.get('calories')} suffer_score: {a.get('suffer_score')} pr_count: {a.get('pr_count')}")
-        if 'summary' in a:
-            print(f"   Summary keys: {list(a['summary'].keys())}")
+
+    print("🔍 Enriching recent activities with full detail (calories etc)...")
+    activities = enrich_activities(token, activities, max_enrich=15)
 
     print("📅 Fetching 12-month history for volume chart...")
     activities_12m = get_activities(token, months=12)
