@@ -677,6 +677,12 @@ if __name__ == "__main__":
     print("🏃 Fetching recent activities (last 90 days)...")
     activities = get_activities(token, months=3)
     print(f"   Found {len(activities)} activities")
+    if activities:
+        a = activities[0]
+        print(f"   Sample activity keys: {list(a.keys())}")
+        print(f"   Sample calories: {a.get('calories')} suffer_score: {a.get('suffer_score')} pr_count: {a.get('pr_count')}")
+        if 'summary' in a:
+            print(f"   Summary keys: {list(a['summary'].keys())}")
 
     print("📅 Fetching 12-month history for volume chart...")
     activities_12m = get_activities(token, months=12)
