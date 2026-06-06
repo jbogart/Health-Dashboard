@@ -22,10 +22,27 @@ def get_access_token():
 
 
 def get_athlete_zones(token):
-    r = requests.get("https://www.strava.com/api/v3/athlete/zones",
-                     headers={"Authorization": f"Bearer {token}"})
-    r.raise_for_status()
-    return r.json()
+    # Zones endpoint requires profile:read_all scope.
+    # Returning hardcoded values from your Strava profile.
+    return {
+        "heart_rate_zones": [
+            {"min": 0,   "max": 120},
+            {"min": 121, "max": 150},
+            {"min": 151, "max": 165},
+            {"min": 166, "max": 179},
+            {"min": 180, "max": None},
+        ],
+        "functional_threshold_power": 175,
+        "power_zones": [
+            {"min": 0,   "max": 96},
+            {"min": 97,  "max": 131},
+            {"min": 132, "max": 158},
+            {"min": 159, "max": 184},
+            {"min": 185, "max": 210},
+            {"min": 211, "max": 263},
+            {"min": 264, "max": None},
+        ],
+    }
 
 
 def get_activities(token, months=3):
