@@ -378,10 +378,73 @@ def hr_zone_rows(zones_data):
     return rows, zones_data.get("functional_threshold_power"), zones_data.get("power_zones", [])
 
 
+# ── Apple Health data (via Cloudflare Worker) ──────────────────────────────────
+
+HEALTH_WORKER_URL = "https://health-proxy.lemmetalkwithjustin.workers.dev/health"
+
+def get_apple_health_data():
+    """
+    Fetch latest Apple Health metrics from the Cloudflare Worker.
+    Returns a dict of metrics, or empty dict if unavailable.
+    """
+    try:
+        r = requests.get(HEALTH_WORKER_URL, timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            if "error" in data:
+                print(f"   ⚠️  No Apple Health data yet: {data['error']}")
+                return {}
+            print(f"   ✅ Apple Health data fetched — recorded {data.get('recorded_at','?')}")
+            return data
+        else:
+            print(f"   ⚠️  Worker returned {r.status_code}")
+            return {}
+    except Exception as e:
+        print(f"   ⚠️  Could not reach health worker: {e}")
+        return {}
+
+
 # ── HTML render ────────────────────────────────────────────────────────────────
 
-def render(stats, recent, hr_rows, ftp, pwr_zones, monthly, week_plan, week_meta):
+def render(stats, recent, hr_rows, ftp, pwr_zones, monthly, week_plan, week_meta, garmin={}):
     updated = datetime.now(timezone.utc).strftime("%-d %b %Y · %H:%M UTC")
+
+    # Garmin live values with fallbacks to Apple Health baselines
+    garmin_rhr       = garmin.get("resting_hr") or 57
+    garmin_rhr_src   = "Today · Garmin" if garmin.get("resting_hr") else "30-day avg · Apple Watch"
+    garmin_hrv       = garmin.get("hrv_last_night") or 46
+    garmin_hrv_src   = "Last night · Garmin" if garmin.get("hrv_last_night") else "30-day avg · Apple Watch"
+    garmin_hrv_tag   = "tg" if garmin_hrv >= 50 else "tw"
+    garmin_hrv_label = "Good" if garmin_hrv >= 60 else "Fair" if garmin_hrv >= 45 else "Low"
+    garmin_bb        = garmin.get("body_battery_end") or "—"
+    garmin_bb_src    = "Current · Garmin" if garmin.get("body_battery_end") else "Connect Garmin"
+    garmin_bb_tag    = "tg" if (garmin.get("body_battery_end") or 0) >= 50 else "tw"
+    garmin_bb_label  = ("High" if (garmin.get("body_battery_end") or 0) >= 75
+                        else "Medium" if (garmin.get("body_battery_end") or 0) >= 40
+                        else "Low") if garmin.get("body_battery_end") else "—"
+    garmin_sleep       = garmin.get("sleep_score") or "—"
+    garmin_sleep_src   = "Last night · Garmin" if garmin.get("sleep_score") else "Connect Garmin"
+    garmin_sleep_tag   = "tg" if (garmin.get("sleep_score") or 0) >= 75 else "tw"
+    garmin_sleep_label = ("Good" if (garmin.get("sleep_score") or 0) >= 75
+                          else "Fair" if (garmin.get("sleep_score") or 0) >= 60
+                          else "Poor") if garmin.get("sleep_score") else "—"
+    steps_val          = garmin.get("steps") or 0
+    garmin_steps       = f"{steps_val:,}" if steps_val else "—"
+    garmin_steps_src   = "Today · Garmin" if steps_val else "Connect Garmin"
+    garmin_steps_tag   = "tg" if steps_val >= 10000 else "tw"
+    garmin_steps_label = ("✓ Goal met" if steps_val >= 10000
+                          else f"{round(steps_val/100)}%" if steps_val else "—")
+    garmin_vo2         = garmin.get("vo2max") or 38.6
+    garmin_vo2_src     = "Today · Garmin" if garmin.get("vo2max") else "Apple Watch · Jun 3"
+    garmin_stress      = garmin.get("stress_avg") or "—"
+    garmin_stress_src  = "Today · Garmin" if garmin.get("stress_avg") else "Connect Garmin"
+    garmin_stress_tag  = ("tg" if (garmin.get("stress_avg") or 0) < 30
+                          else "tw" if (garmin.get("stress_avg") or 0) > 60 else "ti")
+    garmin_stress_label = ("Low" if (garmin.get("stress_avg") or 0) < 30
+                            else "High" if (garmin.get("stress_avg") or 0) > 60
+                            else "Medium") if garmin.get("stress_avg") else "—"
+    garmin_ftp         = garmin.get("ftp") or 188
+    garmin_ftp_src     = "Garmin Connect" if garmin.get("ftp") else "Garmin (last ride)"
 
     # Recent activities HTML
     act_html = ""
@@ -530,14 +593,24 @@ footer{{margin-top:2rem;font-size:11px;color:#bbb;text-align:center;line-height:
     <span class="badge">● Apple Health</span>
   </div>
 
+  <div class="sl">Vitals — today</div>
+  <div class="mg">
+    <div class="mc"><div class="ml">Resting HR</div><div class="mv">{garmin_rhr} <span class="mu">bpm</span></div><div class="ms">{garmin_rhr_src}</div><span class="mt tg">Excellent</span></div>
+    <div class="mc"><div class="ml">HRV last night</div><div class="mv">{garmin_hrv} <span class="mu">ms</span></div><div class="ms">{garmin_hrv_src}</div><span class="mt {garmin_hrv_tag}">{garmin_hrv_label}</span></div>
+    <div class="mc"><div class="ml">Body battery</div><div class="mv">{garmin_bb}</div><div class="ms">{garmin_bb_src}</div><span class="mt {garmin_bb_tag}">{garmin_bb_label}</span></div>
+    <div class="mc"><div class="ml">Sleep score</div><div class="mv">{garmin_sleep}</div><div class="ms">{garmin_sleep_src}</div><span class="mt {garmin_sleep_tag}">{garmin_sleep_label}</span></div>
+    <div class="mc"><div class="ml">Steps today</div><div class="mv">{garmin_steps}</div><div class="ms">{garmin_steps_src}</div><span class="mt {garmin_steps_tag}">{garmin_steps_label}</span></div>
+    <div class="mc"><div class="ml">VO₂ max</div><div class="mv">{garmin_vo2} <span class="mu">ml/kg</span></div><div class="ms">{garmin_vo2_src}</div><span class="mt tw">Fair — target 42+</span></div>
+  </div>
+
   <div class="sl">Activity summary — last 90 days</div>
   <div class="mg">
     <div class="mc"><div class="ml">Activities</div><div class="mv">{stats['count']}</div><div class="ms">last 90 days</div><span class="mt ti">All sports</span></div>
     <div class="mc"><div class="ml">Calories burned</div><div class="mv">{stats['total_cal']:,} <span class="mu">kcal</span></div><div class="ms">active calories</div><span class="mt ti">Strava</span></div>
     <div class="mc"><div class="ml">Top sport</div><div class="mv" style="font-size:16px">{stats['top_sport']}</div><div class="ms">{stats['top_count']} sessions</div><span class="mt tg">Most frequent</span></div>
-    <div class="mc"><div class="ml">Training load</div><div class="mv">{stats['total_re']}</div><div class="ms">total relative effort</div><span class="mt ti">Strava</span></div>
-    <div class="mc"><div class="ml">Resting HR</div><div class="mv">57 <span class="mu">bpm</span></div><div class="ms">30-day avg · Apple Watch</div><span class="mt tg">Excellent</span></div>
-    <div class="mc"><div class="ml">VO₂ max</div><div class="mv">38.6 <span class="mu">ml/kg</span></div><div class="ms">Apple Watch · Jun 3</div><span class="mt tw">Fair — target 42+</span></div>
+    <div class="mc"><div class="ml">Training load</div><div class="mv">{stats['total_re']}</div><div class="ms">total relative effort · Strava</div><span class="mt ti">90 days</span></div>
+    <div class="mc"><div class="ml">Stress avg</div><div class="mv">{garmin_stress}</div><div class="ms">{garmin_stress_src}</div><span class="mt {garmin_stress_tag}">{garmin_stress_label}</span></div>
+    <div class="mc"><div class="ml">FTP</div><div class="mv">{garmin_ftp} <span class="mu">W</span></div><div class="ms">{garmin_ftp_src}</div><span class="mt ti">Cycling power</span></div>
   </div>
 
   <!-- WEEKLY PLANNER -->
@@ -709,8 +782,11 @@ if __name__ == "__main__":
     monthly          = monthly_calories(activities_12m)
     week_plan, week_meta = build_week_plan(activities)
 
+    print("🍎 Fetching Apple Health data from Cloudflare Worker...")
+    garmin_data = get_apple_health_data()
+
     print("🏗️  Rendering HTML...")
-    html = render(stats, recent, hr_rows, ftp, pwr_zones, monthly, week_plan, week_meta)
+    html = render(stats, recent, hr_rows, ftp, pwr_zones, monthly, week_plan, week_meta, garmin=garmin_data)
 
     out = os.path.join(os.path.dirname(__file__), "..", "index.html")
     with open(out, "w") as f:
