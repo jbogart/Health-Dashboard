@@ -308,6 +308,28 @@ def _s(a, *keys):
     return 0
 
 
+def _calories(a):
+    """
+    Get calories from activity. Falls back to converting kilojoules if calories unavailable.
+    REST API list endpoint omits calories but includes kilojoules for cycling activities.
+    """
+    # Try direct calories fields first
+    cal = _s(a, "total_calories", "calories")
+    if cal:
+        return cal
+    # Fall back: convert kilojoules to kcal (1 kJ = 0.239 kcal)
+    kj = a.get("kilojoules") or a.get("summary", {}).get("kilojoules")
+    if kj:
+        return round(kj * 0.239)
+    # Last resort: estimate from moving time (rough ~8 kcal/min general activity)
+    mt = _s(a, "moving_time")
+    if mt:
+        sport = a.get("sport_type", a.get("type", ""))
+        rate = 10 if sport in ("Ride","GravelRide","VirtualRide") else 7
+        return round((mt / 60) * rate)
+    return 0
+
+
 def _date(a):
     """Get activity date string regardless of API format."""
     return (a.get("start_local")
@@ -317,17 +339,10 @@ def _date(a):
 
 def monthly_calories(activities):
     by_month = defaultdict(lambda: defaultdict(float))
-    # Debug: print first activity structure
-    if activities:
-        a0 = activities[0]
-        print(f"   [monthly] First activity keys: {list(a0.keys())[:8]}")
-        print(f"   [monthly] start_date={a0.get('start_date')} start_local={a0.get('start_local')} calories={a0.get('calories')} summary={bool(a0.get('summary'))}")
-        if a0.get('summary'):
-            print(f"   [monthly] summary.total_calories={a0['summary'].get('total_calories')}")
     for a in activities:
         m = _date(a)[:7]
         sport = a.get("sport_type", a.get("type", "Other"))
-        cal = _s(a, "total_calories", "calories")
+        cal = _calories(a)
         bucket = ("Cycling" if sport in ("Ride","GravelRide","VirtualRide")
                   else "Pickleball" if sport == "Pickleball"
                   else "Run/Hike" if sport in ("Run","Walk","Hike")
