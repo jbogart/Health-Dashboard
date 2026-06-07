@@ -553,6 +553,28 @@ def render(stats, recent, hr_rows, ftp, pwr_zones, monthly, week_plan, week_meta
     load_pct    = min(100, round((week_meta['done_re'] / max(week_meta['avg_weekly_re'], 1)) * 100))
     load_color  = "#1D9E75" if load_pct >= 80 else "#EF9F27" if load_pct >= 40 else "#E24B4A"
 
+    # VO2 max estimates from power data
+    w_kg        = garmin_weight_lb * 0.453592
+    ftp_w       = garmin_ftp
+    p5min       = 160   # best 5-min power across rides
+    p20min      = 139   # best 20-min power across rides
+    avg_hr_ride = 161.2 # May 29 harder ride
+    max_hr_ride = 183
+    avg_w_ride  = 122.6
+    rhr_val     = garmin_rhr if isinstance(garmin_rhr, (int, float)) else 57
+
+    vo2_m1 = round((ftp_w / w_kg * 10.8) + 7, 1)          # Hawley & Noakes
+    vo2_m2 = round((p5min / w_kg * 10.8) + 7, 1)           # 5-min power
+    hrr    = (avg_hr_ride - rhr_val) / (max_hr_ride - rhr_val)
+    vo2_m3 = round((avg_w_ride / hrr / w_kg * 10.8) + 7, 1) # HR reserve
+    vo2_m4 = round((p20min * 0.95 / w_kg * 10.8) + 7, 1)   # 20-min power
+    vo2_cycling = round((vo2_m1 + vo2_m2 + vo2_m3 + vo2_m4) / 4, 1)
+    ftp_wkg = round(ftp_w / w_kg, 2)
+    vo2_zone = ("Poor" if vo2_cycling < 33 else "Fair" if vo2_cycling < 42
+                else "Good" if vo2_cycling < 52 else "Excellent")
+    vo2_tag  = "tw" if vo2_cycling < 42 else "tg"
+    weight_kg_display = round(w_kg, 1)
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -637,7 +659,7 @@ footer{{margin-top:2rem;font-size:11px;color:#bbb;text-align:center;line-height:
     <div class="mc"><div class="ml">Body battery</div><div class="mv">{garmin_bb}</div><div class="ms">{garmin_bb_src}</div><span class="mt {garmin_bb_tag}">{garmin_bb_label}</span></div>
     <div class="mc"><div class="ml">Sleep score</div><div class="mv">{garmin_sleep}</div><div class="ms">{garmin_sleep_src}</div><span class="mt {garmin_sleep_tag}">{garmin_sleep_label}</span></div>
     <div class="mc"><div class="ml">Steps today</div><div class="mv">{garmin_steps}</div><div class="ms">{garmin_steps_src}</div><span class="mt {garmin_steps_tag}">{garmin_steps_label}</span></div>
-    <div class="mc"><div class="ml">VO₂ max</div><div class="mv">{garmin_vo2} <span class="mu">ml/kg</span></div><div class="ms">{garmin_vo2_src}</div><span class="mt tw">Fair — target 42+</span></div>
+    <div class="mc"><div class="ml">VO₂ max (Apple)</div><div class="mv">{garmin_vo2} <span class="mu">ml/kg</span></div><div class="ms">{garmin_vo2_src}</div><span class="mt {vo2_tag}">{vo2_zone} — target 42+</span></div>
   </div>
 
   <div class="sl">Activity summary — last 90 days</div>
@@ -646,8 +668,8 @@ footer{{margin-top:2rem;font-size:11px;color:#bbb;text-align:center;line-height:
     <div class="mc"><div class="ml">Calories burned</div><div class="mv">{stats['total_cal']:,} <span class="mu">kcal</span></div><div class="ms">active calories</div><span class="mt ti">Strava</span></div>
     <div class="mc"><div class="ml">Top sport</div><div class="mv" style="font-size:16px">{stats['top_sport']}</div><div class="ms">{stats['top_count']} sessions</div><span class="mt tg">Most frequent</span></div>
     <div class="mc"><div class="ml">Training load</div><div class="mv">{stats['total_re']}</div><div class="ms">total relative effort · Strava</div><span class="mt ti">90 days</span></div>
-    <div class="mc"><div class="ml">Stress avg</div><div class="mv">{garmin_stress}</div><div class="ms">{garmin_stress_src}</div><span class="mt {garmin_stress_tag}">{garmin_stress_label}</span></div>
-    <div class="mc"><div class="ml">FTP</div><div class="mv">{garmin_ftp} <span class="mu">W</span></div><div class="ms">{garmin_ftp_src}</div><span class="mt ti">Cycling power</span></div>
+    <div class="mc"><div class="ml">Weight</div><div class="mv">{garmin_weight_lb} <span class="mu">lb</span></div><div class="ms">{garmin_weight_src} · {weight_kg_display} kg</div><span class="mt ti">FTP {ftp_wkg} W/kg</span></div>
+    <div class="mc"><div class="ml">VO₂ max (cycling)</div><div class="mv">{vo2_cycling} <span class="mu">ml/kg</span></div><div class="ms">4-method avg · {garmin_weight_lb} lb</div><span class="mt {vo2_tag}">{vo2_zone} for age 44</span></div>
   </div>
 
   <!-- WEEKLY PLANNER -->
@@ -705,7 +727,8 @@ footer{{margin-top:2rem;font-size:11px;color:#bbb;text-align:center;line-height:
   <div class="cc">
     <div style="position:relative;width:100%;height:200px"><canvas id="vo2Chart"></canvas></div>
     <div class="stat-row">
-      <span>Current: <strong>38.6</strong></span>
+      <span>Apple Watch: <strong>{garmin_vo2}</strong></span>
+      <span>Cycling est: <strong>{vo2_cycling}</strong></span>
       <span>Peak: <strong style="color:#3b6d11">43.2</strong> (Dec 2024)</span>
       <span>Good for age 44M: <strong>42.5+</strong></span>
       <span style="color:#854f0b">↓ 4.6 from peak</span>
@@ -747,7 +770,7 @@ footer{{margin-top:2rem;font-size:11px;color:#bbb;text-align:center;line-height:
 
   <div class="sl">Recommendations</div>
   <div class="rc">
-    <div class="rr"><div class="ri">↑</div><div><div class="rt">VO₂ max 4.6 pts below your Dec 2024 peak — 2× Zone 2 rides per week will reverse this</div><div class="rsub">Target: back above 42 by end of summer. Your gravel rides are your best VO₂ stimulus.</div></div></div>
+    <div class="rr"><div class="ri">↑</div><div><div class="rt">VO₂ max cycling estimate: {vo2_cycling} ml/kg — 2× Zone 2 rides per week will push it higher</div><div class="rsub">Apple Watch reads {garmin_vo2}. Cycling estimate uses your {garmin_weight_lb} lb weight and {garmin_ftp}W FTP. A proper 20-min FTP test will sharpen this significantly.</div></div></div>
     <div class="rr"><div class="ri">🏋️</div><div><div class="rt">Strength training missing — add 2× per week</div><div class="rsub">Cycling + pickleball cover cardio well. Strength is the missing pillar for longevity at 44. Even 30 min bodyweight sessions count.</div></div></div>
     <div class="rr"><div class="ri">〜</div><div><div class="rt">HRV of 46 ms — consistent sleep timing is the highest-leverage fix</div><div class="rsub">Your ceiling is 71 ms. Regular bedtime + limiting alcohol pushes baseline to 55–65 ms range.</div></div></div>
     <div class="rr"><div class="ri">♥</div><div><div class="rt">Resting HR 57 bpm — excellent for 44, top ~15% for your age</div><div class="rsub">Protect it by keeping 2 aerobic sessions per week minimum. Don't let the base erode further.</div></div></div>
