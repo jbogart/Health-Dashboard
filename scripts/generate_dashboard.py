@@ -457,12 +457,13 @@ def render(stats, recent, hr_rows, ftp, pwr_zones, monthly, week_plan, week_meta
     garmin_bb_label  = ("High" if (garmin.get("body_battery_end") or 0) >= 75
                         else "Medium" if (garmin.get("body_battery_end") or 0) >= 40
                         else "Low") if garmin.get("body_battery_end") else "—"
-    garmin_sleep       = garmin.get("sleep_score") or "—"
-    garmin_sleep_src   = "Last night · Garmin" if garmin.get("sleep_score") else "Connect Garmin"
-    garmin_sleep_tag   = "tg" if (garmin.get("sleep_score") or 0) >= 75 else "tw"
-    garmin_sleep_label = ("Good" if (garmin.get("sleep_score") or 0) >= 75
-                          else "Fair" if (garmin.get("sleep_score") or 0) >= 60
-                          else "Poor") if garmin.get("sleep_score") else "—"
+    sleep_hrs          = garmin.get("sleep_hours") or 0
+    if not sleep_hrs and garmin.get("sleep_minutes"):
+        sleep_hrs = round(garmin.get("sleep_minutes") / 60, 1)
+    garmin_sleep       = f"{sleep_hrs} hrs" if sleep_hrs else "—"
+    garmin_sleep_src   = "Last night · Apple Health" if sleep_hrs else "Apple Health (nightly)"
+    garmin_sleep_tag   = "tg" if sleep_hrs >= 7 else "tw"
+    garmin_sleep_label = ("Good" if sleep_hrs >= 7.5 else "Fair" if sleep_hrs >= 6 else "Low") if sleep_hrs else "—"
     steps_val          = garmin.get("steps") or 0
     garmin_steps       = f"{steps_val:,}" if steps_val else "—"
     garmin_steps_src   = "Today · Garmin" if steps_val else "Connect Garmin"
@@ -657,7 +658,7 @@ footer{{margin-top:2rem;font-size:11px;color:#bbb;text-align:center;line-height:
     <div class="mc"><div class="ml">Resting HR</div><div class="mv">{garmin_rhr} <span class="mu">bpm</span></div><div class="ms">{garmin_rhr_src}</div><span class="mt tg">Excellent</span></div>
     <div class="mc"><div class="ml">HRV last night</div><div class="mv">{garmin_hrv} <span class="mu">ms</span></div><div class="ms">{garmin_hrv_src}</div><span class="mt {garmin_hrv_tag}">{garmin_hrv_label}</span></div>
     <div class="mc"><div class="ml">Body battery</div><div class="mv">{garmin_bb}</div><div class="ms">{garmin_bb_src}</div><span class="mt {garmin_bb_tag}">{garmin_bb_label}</span></div>
-    <div class="mc"><div class="ml">Sleep score</div><div class="mv">{garmin_sleep}</div><div class="ms">{garmin_sleep_src}</div><span class="mt {garmin_sleep_tag}">{garmin_sleep_label}</span></div>
+    <div class="mc"><div class="ml">Sleep last night</div><div class="mv">{garmin_sleep}</div><div class="ms">{garmin_sleep_src}</div><span class="mt {garmin_sleep_tag}">{garmin_sleep_label}</span></div>
     <div class="mc"><div class="ml">Steps today</div><div class="mv">{garmin_steps}</div><div class="ms">{garmin_steps_src}</div><span class="mt {garmin_steps_tag}">{garmin_steps_label}</span></div>
     <div class="mc"><div class="ml">VO₂ max (Apple)</div><div class="mv">{garmin_vo2} <span class="mu">ml/kg</span></div><div class="ms">{garmin_vo2_src}</div><span class="mt {vo2_tag}">{vo2_zone} — target 42+</span></div>
   </div>
