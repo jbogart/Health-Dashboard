@@ -480,6 +480,8 @@ def render(stats, recent, hr_rows, ftp, pwr_zones, monthly, week_plan, week_meta
                             else "Medium") if garmin.get("stress_avg") else "—"
     garmin_ftp         = garmin.get("ftp") or 188
     garmin_ftp_src     = "Garmin Connect" if garmin.get("ftp") else "Garmin (last ride)"
+    garmin_weight_lb   = garmin.get("weight_lb") or 145
+    garmin_weight_src  = "Apple Health" if garmin.get("weight_lb") else "Manual (145 lb)"
 
     # Recent activities HTML
     act_html = ""
