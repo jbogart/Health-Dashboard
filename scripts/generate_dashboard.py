@@ -446,7 +446,7 @@ def render(stats, recent, hr_rows, ftp, pwr_zones, monthly, week_plan, week_meta
 
     # Garmin live values with fallbacks to Apple Health baselines
     garmin_rhr       = garmin.get("resting_hr") or 57
-    garmin_rhr_src   = "Today · Garmin" if garmin.get("resting_hr") else "30-day avg · Apple Watch"
+    garmin_rhr_src   = "Today · Apple Health" if garmin.get("resting_hr") else "30-day avg · Apple Watch"
     garmin_hrv       = garmin.get("hrv_last_night") or 46
     garmin_hrv_src   = "Last night · Garmin" if garmin.get("hrv_last_night") else "30-day avg · Apple Watch"
     garmin_hrv_tag   = "tg" if garmin_hrv >= 50 else "tw"
@@ -466,12 +466,12 @@ def render(stats, recent, hr_rows, ftp, pwr_zones, monthly, week_plan, week_meta
     garmin_sleep_label = ("Good" if sleep_hrs >= 7.5 else "Fair" if sleep_hrs >= 6 else "Low") if sleep_hrs else "—"
     steps_val          = garmin.get("steps") or 0
     garmin_steps       = f"{steps_val:,}" if steps_val else "—"
-    garmin_steps_src   = "Today · Garmin" if steps_val else "Connect Garmin"
+    garmin_steps_src   = "Last sync · Apple Health" if steps_val else "Apple Health (syncs every 3hrs)"
     garmin_steps_tag   = "tg" if steps_val >= 10000 else "tw"
     garmin_steps_label = ("✓ Goal met" if steps_val >= 10000
                           else f"{round(steps_val/100)}%" if steps_val else "—")
     garmin_vo2         = garmin.get("vo2max") or 38.6
-    garmin_vo2_src     = "Today · Garmin" if garmin.get("vo2max") else "Apple Watch · Jun 3"
+    garmin_vo2_src     = "Today · Apple Health" if garmin.get("vo2max") else "Apple Watch · Jun 3"
     garmin_stress      = garmin.get("stress_avg") or "—"
     garmin_stress_src  = "Today · Garmin" if garmin.get("stress_avg") else "Connect Garmin"
     garmin_stress_tag  = ("tg" if (garmin.get("stress_avg") or 0) < 30
