@@ -289,20 +289,6 @@ def build_week_plan(activities):
 
 # ── Data aggregators ───────────────────────────────────────────────────────────
 
-def monthly_calories(activities):
-    by_month = defaultdict(lambda: defaultdict(float))
-    for a in activities:
-        m = a.get("start_date", "")[:7]
-        sport = a.get("sport_type", a.get("type", "Other"))
-        cal = a.get("calories") or 0
-        bucket = ("Cycling" if sport in ("Ride","GravelRide","VirtualRide")
-                  else "Pickleball" if sport == "Pickleball"
-                  else "Run/Hike" if sport in ("Run","Walk","Hike")
-                  else "Other")
-        by_month[m][bucket] += cal
-    return by_month
-
-
 def _s(a, *keys):
     """Get a value from activity, checking summary sub-object first."""
     sub = a.get("summary", {})
@@ -315,6 +301,20 @@ def _s(a, *keys):
         if v is not None and v != 0:
             return v
     return 0
+
+def monthly_calories(activities):
+    by_month = defaultdict(lambda: defaultdict(float))
+    for a in activities:
+        m = (a.get("start_local") or a.get("start_date_local") or a.get("start_date",""))[:7]
+        sport = a.get("sport_type", a.get("type", "Other"))
+        cal = _s(a, "total_calories", "calories")
+        bucket = ("Cycling" if sport in ("Ride","GravelRide","VirtualRide")
+                  else "Pickleball" if sport == "Pickleball"
+                  else "Run/Hike" if sport in ("Run","Walk","Hike")
+                  else "Other")
+        by_month[m][bucket] += cal
+    return by_month
+
 
 
 def recent_rows(activities, n=10):
