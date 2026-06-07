@@ -290,22 +290,42 @@ def build_week_plan(activities):
 # ── Data aggregators ───────────────────────────────────────────────────────────
 
 def _s(a, *keys):
-    """Get a value from activity, checking summary sub-object first."""
+    """
+    Get a value from a Strava activity, handling both:
+    - REST API format: flat dict with start_date, suffer_score, calories etc.
+    - MCP format: nested summary dict with start_local, relative_effort, total_calories etc.
+    """
     sub = a.get("summary", {})
     for k in keys:
+        # Check summary wrapper first (MCP format)
         v = sub.get(k)
         if v is not None and v != 0:
             return v
-    for k in keys:
+        # Then check top level (REST API format)
         v = a.get(k)
         if v is not None and v != 0:
             return v
     return 0
 
+
+def _date(a):
+    """Get activity date string regardless of API format."""
+    return (a.get("start_local")
+            or a.get("start_date_local")
+            or a.get("start_date")
+            or "")
+
 def monthly_calories(activities):
     by_month = defaultdict(lambda: defaultdict(float))
+    # Debug: print first activity structure
+    if activities:
+        a0 = activities[0]
+        print(f"   [monthly] First activity keys: {list(a0.keys())[:8]}")
+        print(f"   [monthly] start_date={a0.get('start_date')} start_local={a0.get('start_local')} calories={a0.get('calories')} summary={bool(a0.get('summary'))}")
+        if a0.get('summary'):
+            print(f"   [monthly] summary.total_calories={a0['summary'].get('total_calories')}")
     for a in activities:
-        m = (a.get("start_local") or a.get("start_date_local") or a.get("start_date",""))[:7]
+        m = _date(a)[:7]
         sport = a.get("sport_type", a.get("type", "Other"))
         cal = _s(a, "total_calories", "calories")
         bucket = ("Cycling" if sport in ("Ride","GravelRide","VirtualRide")
